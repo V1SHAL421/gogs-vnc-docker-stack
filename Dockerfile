@@ -7,6 +7,7 @@ ENV GOGS_VERSION=0.12.11 \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
+        git \
         tini \
         xorg \
         fluxbox \
@@ -15,6 +16,7 @@ RUN apt-get update && \
         firefox-esr \
         novnc \
         websockify \
+        sqlite3 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf vnc.html /usr/share/novnc/index.html
 
@@ -42,9 +44,23 @@ RUN useradd -m -d /home/git -s /bin/bash git && \
 COPY start.sh /usr/local/bin/start.sh
 COPY gogs/custom/conf/app.ini "$GOGS_HOME/custom/conf/app.ini"
 
+# Add helper scripts for grader
+COPY scripts/gogs_login /usr/local/bin/gogs_login
+COPY scripts/gogs_pull_data /usr/local/bin/gogs_pull_data
+COPY scripts/gogs_push_data /usr/local/bin/gogs_push_data
 
-RUN chmod +x /usr/local/bin/start.sh && \
-    chown git:git "$GOGS_HOME/custom/conf/app.ini" /usr/local/bin/start.sh
+
+RUN chmod +x \
+      /usr/local/bin/start.sh \
+      /usr/local/bin/gogs_login \
+      /usr/local/bin/gogs_pull_data \
+      /usr/local/bin/gogs_push_data \
+    && chown git:git \
+      "$GOGS_HOME/custom/conf/app.ini" \
+      /usr/local/bin/start.sh \
+      /usr/local/bin/gogs_login \
+      /usr/local/bin/gogs_pull_data \
+      /usr/local/bin/gogs_push_data
 
 # (Optional) 5) Pre-initialize DB + admin at build time for faster runtime startup
 # Once you’ve tested the CLI flags for your Gogs build, you can uncomment this

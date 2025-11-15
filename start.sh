@@ -11,12 +11,12 @@ ADMIN_EMAIL="engineer@example.com"
 VNC_DISPLAY=":1"
 VNC_GEOMETRY="1280x800"
 VNC_DEPTH="24"
-VNC_PORT="5901"      # 5900 + display number
+VNC_PORT="5901"
 NOVNC_PORT="6080"
 
 cd "$GOGS_HOME"
 
-# Ensure Gogs uses our custom config
+# ✅ Make sure ALL gogs commands use the same custom config
 export GOGS_CUSTOM="$GOGS_HOME/custom"
 
 ###############################################################################
@@ -25,6 +25,7 @@ export GOGS_CUSTOM="$GOGS_HOME/custom"
 if [ ! -f "$DB_FILE" ]; then
     echo "[INIT] No database found. Performing first-time setup..."
 
+    # Start temporary Gogs to initialize DB schema
     ./gogs web &
     TEMP_GOGS_PID=$!
 
@@ -69,16 +70,13 @@ vncserver "${VNC_DISPLAY}" \
 # (4) START noVNC + websockify ON PORT 6080 (FOREGROUND)
 ###############################################################################
 echo "[START] Starting noVNC on port ${NOVNC_PORT}, proxying to VNC port ${VNC_PORT}..."
-NOVNC_CMD=(websockify --web /usr/share/novnc "${NOVNC_PORT}" "localhost:${VNC_PORT}")
+websockify --web /usr/share/novnc "${NOVNC_PORT}" "localhost:${VNC_PORT}"
 
 ###############################################################################
-# (5) CLEAN SHUTDOWN / SIGNAL HANDLING
+# (5) CLEAN SHUTDOWN (handled when websockify exits)
 ###############################################################################
 cleanup() {
-    echo "[STOP] Caught signal, shutting down services..."
-
-    echo "[STOP] Stopping noVNC/websockify..."
-    pkill -f "websockify.*${NOVNC_PORT}" 2>/dev/null || true
+    echo "[STOP] Shutting down services..."
 
     echo "[STOP] Stopping VNC server..."
     vncserver -kill "${VNC_DISPLAY}" 2>/dev/null || true
@@ -94,7 +92,6 @@ trap cleanup SIGTERM SIGINT
 echo "[READY] Gogs running on http://localhost:3000 (inside container)"
 echo "[READY] noVNC available at http://localhost:${NOVNC_PORT}"
 
-# Run noVNC in the foreground; container lifetime is tied to this.
-"${NOVNC_CMD[@]}"
-echo "[EXIT] noVNC/websockify exited; shutting down."
+# Keep container alive while noVNC/websockify runs in foreground
+wait || true
 cleanup

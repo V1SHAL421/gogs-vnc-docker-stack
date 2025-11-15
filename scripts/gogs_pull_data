@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GOGS_HOME="/gogs"
+DATA_DIR="$GOGS_HOME/data"
+BACKUP_DIR="$GOGS_HOME/backup"
+
+echo "[INFO] Backing up Gogs data from: $DATA_DIR"
+echo "[INFO] Backup target: $BACKUP_DIR"
+
+if [ ! -f "$DATA_DIR/gogs.db" ]; then
+  echo "[ERROR] Database file not found at $DATA_DIR/gogs.db"
+  exit 1
+fi
+
+if [ ! -d "$DATA_DIR/repositories" ]; then
+  echo "[ERROR] Repositories directory not found at $DATA_DIR/repositories"
+  exit 1
+fi
+
+mkdir -p "$BACKUP_DIR"
+
+# Clear any previous backup
+rm -rf "$BACKUP_DIR/gogs.db" "$BACKUP_DIR/repositories"
+
+# Copy DB + repositories
+cp "$DATA_DIR/gogs.db" "$BACKUP_DIR/gogs.db"
+cp -R "$DATA_DIR/repositories" "$BACKUP_DIR/repositories"
+
+echo "[OK] Backup complete."
+echo "     DB:  $BACKUP_DIR/gogs.db"
+echo "     Repos: $BACKUP_DIR/repositories"

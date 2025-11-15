@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GOGS_HOME="/gogs"
+DB_FILE="$GOGS_HOME/data/gogs.db"
+
+echo "[INFO] Checking Gogs SQLite DB at: $DB_FILE"
+
+if [ ! -f "$DB_FILE" ]; then
+  echo "[ERROR] Database file not found at $DB_FILE"
+  exit 1
+fi
+
+# Look for a user named 'engineer' in the `user` table
+USER_ROW=$(sqlite3 "$DB_FILE" "SELECT name FROM user WHERE lower(name) = 'engineer' LIMIT 1;" || true)
+
+if [ "$USER_ROW" = "engineer" ]; then
+  echo "[OK] Admin user 'engineer' exists in the Gogs database."
+  exit 0
+else
+  echo "[ERROR] Admin user 'engineer' not found in the Gogs database."
+  exit 1
+fi

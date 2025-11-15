@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GOGS_HOME="/gogs"
+DATA_DIR="$GOGS_HOME/data"
+BACKUP_DIR="$GOGS_HOME/backup"
+
+echo "[INFO] Restoring Gogs data from: $BACKUP_DIR"
+echo "[INFO] Restore target: $DATA_DIR"
+
+if [ ! -f "$BACKUP_DIR/gogs.db" ] || [ ! -d "$BACKUP_DIR/repositories" ]; then
+  echo "[ERROR] Backup not found. Run gogs_pull_data first."
+  exit 1
+fi
+
+# Remove current state
+rm -f "$DATA_DIR/gogs.db"
+rm -rf "$DATA_DIR/repositories"
+
+# Restore DB + repos
+cp "$BACKUP_DIR/gogs.db" "$DATA_DIR/gogs.db"
+cp -R "$BACKUP_DIR/repositories" "$DATA_DIR/repositories"
+
+echo "[OK] Restore complete."
+echo "     DB:  $DATA_DIR/gogs.db"
+echo "     Repos: $DATA_DIR/repositories"
