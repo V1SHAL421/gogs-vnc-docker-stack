@@ -1,4 +1,4 @@
-# HUD Research Engineer Challenge
+# Gogs VNC Docker Stack
 
 Containerized Gogs Git service with VNC/noVNC access.
 
